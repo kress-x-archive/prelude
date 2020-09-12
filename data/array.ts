@@ -1,8 +1,12 @@
-export const empty = <A>(): ReadonlyArray<A> => [];
+type ArrayT<A> = ReadonlyArray<A>;
+
+export default ArrayT;
+
+export const empty = <A>(): ArrayT<A> => [];
 
 export const equals = <A>(
-  x: ReadonlyArray<A>,
-  y: ReadonlyArray<A>,
+  x: ArrayT<A>,
+  y: ArrayT<A>,
 ): boolean => {
   const l = x.length;
   const k = y.length;
@@ -15,13 +19,13 @@ export const equals = <A>(
 };
 
 export const concat = <A>(
-  x: ReadonlyArray<A>,
-  y: ReadonlyArray<A>,
-): ReadonlyArray<A> => [...x, ...y];
+  x: ArrayT<A>,
+  y: ArrayT<A>,
+): ArrayT<A> => [...x, ...y];
 
 export const invert = <A>(
-  t: ReadonlyArray<A>,
-): ReadonlyArray<A> => {
+  t: ArrayT<A>,
+): ArrayT<A> => {
   const l = t.length;
 
   const result: A[] = new Array(l);
@@ -33,8 +37,8 @@ export const invert = <A>(
 
 export const map = <A, B>(
   f: (x: A) => B,
-  t: ReadonlyArray<A>,
-): ReadonlyArray<B> => {
+  t: ArrayT<A>,
+): ArrayT<B> => {
   const l = t.length;
 
   const result: B[] = new Array(l);
@@ -47,7 +51,7 @@ export const map = <A, B>(
 export const reduce = <A, B>(
   f: (x: A, y: B) => A,
   x: A,
-  u: ReadonlyArray<B>,
+  u: ArrayT<B>,
 ): A => {
   const l = u.length;
 
@@ -58,8 +62,8 @@ export const reduce = <A, B>(
 
 export const filter = <A>(
   pred: (x: A) => boolean,
-  ta: ReadonlyArray<A>,
-): ReadonlyArray<A> => {
+  ta: ArrayT<A>,
+): ArrayT<A> => {
   const l = ta.length;
 
   const result: A[] = [];
@@ -75,9 +79,9 @@ export const filter = <A>(
 };
 
 export const ap = <A, B>(
-  tf: ReadonlyArray<((x: A) => B)>,
-  ta: ReadonlyArray<A>,
-): ReadonlyArray<B> => {
+  tf: ArrayT<((x: A) => B)>,
+  ta: ArrayT<A>,
+): ArrayT<B> => {
   const l = tf.length;
   const k = ta.length;
 
@@ -93,12 +97,12 @@ export const ap = <A, B>(
   return result;
 };
 
-export const of = <A>(x: A): ReadonlyArray<A> => [x];
+export const of = <A>(x: A): ArrayT<A> => [x];
 
 export const chain = <A, B>(
-  f: (x: A) => ReadonlyArray<B>,
-  t: ReadonlyArray<A>,
-): ReadonlyArray<B> => {
+  f: (x: A) => ArrayT<B>,
+  t: ArrayT<A>,
+): ArrayT<B> => {
   const l = t.length;
 
   const result: B[] = new Array(l);
@@ -115,8 +119,8 @@ export const chain = <A, B>(
 };
 
 export const join = <A>(
-  tt: ReadonlyArray<ReadonlyArray<A>>,
-): ReadonlyArray<A> => {
+  tt: ArrayT<ArrayT<A>>,
+): ArrayT<A> => {
   const l = tt.length;
 
   const result: A[] = new Array(l);
