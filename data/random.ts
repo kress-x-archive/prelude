@@ -1,5 +1,4 @@
-import Kind, { _ } from "../kind.ts";
-import { map as mapArray, reduce as reduceArray } from "../prim/array.ts";
+import * as Array2 from "../prim/array.ts";
 
 // The magic constants here are from Numerical Recipes, inlined for perf reasons.
 
@@ -8,24 +7,14 @@ export interface Seed {
   increment: number;
 }
 
-export interface Random<T> {
-  value: T;
-  seed: Seed;
+export default interface RandomT<T> {
+  (seed: Seed): RandomValue<T>;
 }
 
-export interface Factory<T> {
-  (seed: Seed): Random<T>;
-}
-
-export interface Weighted<T> {
-  weight: number;
-  value: T;
-}
-
-export const integer = (
+export const int = (
   a = minInt,
   b = maxInt,
-): Factory<number> => {
+): RandomT<number> => {
   const lo = min(a, b);
   const hi = max(a, b);
 
@@ -62,7 +51,14 @@ export const integer = (
   };
 };
 
-export const float = (min = 0, max = 1): Factory<number> => {
+const genBinary = int(0, 1);
+
+export const bool: RandomT<boolean> = (seed0) => {
+  const { value, seed: seed1 } = genBinary(seed0);
+  return { value: value === 1, seed: seed1 };
+};
+
+export const float = (min = 0, max = 1): RandomT<number> => {
   const range = abs(max - min);
 
   return (seed0) => {
@@ -88,20 +84,20 @@ export const float = (min = 0, max = 1): Factory<number> => {
   };
 };
 
-export const uniform = <T>(value: T, values: T[]): Factory<T> =>
-  weighted(addOne(value), mapArray(addOne, values));
+export const uniform = <T>(value: T, values: T[]): RandomT<T> =>
+  weighted(addOne(value), Array2.map(addOne, values));
 
 export const weighted = <T>(
   first: Weighted<T>,
   others: Weighted<T>[],
-): Factory<T> => {
-  const total = normalize(first) + sum(mapArray(normalize, others));
+): RandomT<T> => {
+  const total = normalize(first) + sum(Array2.map(normalize, others));
   return map((c) => getByWeight(first, others, c), float(0, total));
 };
 
-export const of = <T>(value: T): Factory<T> => (seed) => ({ value, seed });
+export const of = <T>(value: T): RandomT<T> => (seed) => ({ value, seed });
 
-export const array = <T>(length: number, factory: Factory<T>): Factory<T[]> =>
+export const array = <T>(length: number, factory: RandomT<T>): RandomT<T[]> =>
   (seed0) => {
     const result: T[] = Array(length);
 
@@ -117,9 +113,9 @@ export const array = <T>(length: number, factory: Factory<T>): Factory<T[]> =>
   };
 
 export const pair = <A, B>(
-  factoryA: Factory<A>,
-  factoryB: Factory<B>,
-): Factory<[A, B]> =>
+  factoryA: RandomT<A>,
+  factoryB: RandomT<B>,
+): RandomT<[A, B]> =>
   (seed0) => {
     const { value: a, seed: seed1 } = factoryA(seed0);
     const { value: b, seed: seed2 } = factoryB(seed1);
@@ -127,24 +123,24 @@ export const pair = <A, B>(
   };
 
 export const ap = <A, B>(
-  tf: Factory<(x: A) => B>,
-  ta: Factory<A>,
-): Factory<B> =>
+  tf: RandomT<(x: A) => B>,
+  ta: RandomT<A>,
+): RandomT<B> =>
   chain<(x: A) => B, B>(
     (f) => map<A, B>((a) => f(a), ta),
     tf,
   );
 
-export const map = <A, B>(fn: (a: A) => B, factory: Factory<A>): Factory<B> =>
+export const map = <A, B>(fn: (a: A) => B, factory: RandomT<A>): RandomT<B> =>
   (seed0) => {
     const { value: a, seed } = factory(seed0);
     return { value: fn(a), seed };
   };
 
 export const chain = <A, B>(
-  f: (x: A) => Factory<B>,
-  t: Factory<A>,
-): Factory<B> =>
+  f: (x: A) => RandomT<B>,
+  t: RandomT<A>,
+): RandomT<B> =>
   (seed0) => {
     const { value: a, seed: seed1 } = t(seed0);
     const g = f(a);
@@ -153,11 +149,11 @@ export const chain = <A, B>(
 
 const id = <T>(value: T): T => value;
 
-export const join = <A>(tt: Factory<Factory<A>>): Factory<A> => {
-  return chain<Factory<A>, A>(id, tt);
+export const join = <A>(tt: RandomT<RandomT<A>>): RandomT<A> => {
+  return chain<RandomT<A>, A>(id, tt);
 };
 
-export const lazy = <T>(f: () => Factory<T>): Factory<T> => (seed) => f()(seed);
+export const lazy = <T>(f: () => RandomT<T>): RandomT<T> => (seed) => f()(seed);
 
 export const minInt = -2147483648;
 
@@ -168,14 +164,14 @@ export const initialSeed = (x: number): Seed => ({
   increment: 1013904223,
 });
 
-export const independentSeed: Factory<Seed> = (seed0) => {
+export const independentSeed: RandomT<Seed> = (seed0) => {
   // Although it probably doesn't hold water theoretically, xor two
   // random numbers to make an increment less likely to be
   // pathological. Then make sure that it's odd, which is required.
   // Next make sure it is positive. Finally step it once before use.
-  const { value: state, seed: seed1 } = gen(seed0);
-  const { value: a, seed: seed2 } = gen(seed1);
-  const { value: b, seed: seed3 } = gen(seed2);
+  const { value: state, seed: seed1 } = anyInteger(seed0);
+  const { value: a, seed: seed2 } = anyInteger(seed1);
+  const { value: b, seed: seed3 } = anyInteger(seed2);
 
   return {
     value: { state, increment: ((b ^ a) | 1) >>> 0 },
@@ -183,7 +179,22 @@ export const independentSeed: Factory<Seed> = (seed0) => {
   };
 };
 
+export const frequency = <T>(
+  first: Weighted<RandomT<T>>,
+  others: Weighted<RandomT<T>>[],
+): RandomT<T> => join(weighted(first, others));
+
 /* privates */
+
+type RandomValue<T> = {
+  value: T;
+  seed: Seed;
+};
+
+type Weighted<T> = {
+  weight: number;
+  value: T;
+};
 
 // step the RNG to produce the next seed
 // this is incredibly simple: multiply the state by a constant factor, modulus
@@ -230,6 +241,6 @@ const getByWeight = <T>(
 
 const sumReducer = (a: number, b: number) => a + b;
 
-const sum = (xs: number[]) => reduceArray(sumReducer, 0, xs);
+const sum = (xs: number[]) => Array2.reduce(sumReducer, 0, xs);
 
-const gen = integer();
+const anyInteger = int();
