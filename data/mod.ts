@@ -10,3 +10,6 @@ export * from "./profunctor.ts";
 export * from "./semigroup.ts";
 export * from "./setoid.ts";
 export * from "./traversable.ts";
+
+export { default as ArrayT } from "./array.ts";
+export * as Array from "./array.ts";
