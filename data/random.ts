@@ -2,13 +2,13 @@ import * as Array2 from "../prim/array.ts";
 
 // The magic constants here are from Numerical Recipes, inlined for perf reasons.
 
-export interface Seed {
+export interface SeedT {
   state: number;
   increment: number;
 }
 
 export default interface RandomT<T> {
-  (seed: Seed): RandomValue<T>;
+  (seed: SeedT): RandomValue<T>;
 }
 
 export const int = (
@@ -159,12 +159,12 @@ export const minInt = -2147483648;
 
 export const maxInt = 2147483647;
 
-export const initialSeed = (x: number): Seed => ({
+export const initialSeed = (x: number): SeedT => ({
   state: (1013904223 + x) >>> 0,
   increment: 1013904223,
 });
 
-export const independentSeed: RandomT<Seed> = (seed0) => {
+export const independentSeed: RandomT<SeedT> = (seed0) => {
   // Although it probably doesn't hold water theoretically, xor two
   // random numbers to make an increment less likely to be
   // pathological. Then make sure that it's odd, which is required.
@@ -188,7 +188,7 @@ export const frequency = <T>(
 
 type RandomValue<T> = {
   value: T;
-  seed: Seed;
+  seed: SeedT;
 };
 
 type Weighted<T> = {
@@ -201,7 +201,7 @@ type Weighted<T> = {
 // it by 2^32, and add a magic addend. The addend can be varied to produce
 // independent RNGs, so it is stored as part of the seed. It is given to the
 // new seed unchanged.
-const next = ({ state, increment }: Seed): Seed => ({
+const next = ({ state, increment }: SeedT): SeedT => ({
   state: ((state * 1664525) + increment) >>> 0,
   increment,
 });
