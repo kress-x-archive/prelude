@@ -1,4 +1,4 @@
-import Kind, { _, Ap, Ap2, Flip } from "./kind.ts";
+import type { Kind, _, Ap, Ap2, Flip } from "./kind.ts";
 import { testType } from "./test/support.ts";
 
 type a = symbol;
