@@ -20,11 +20,11 @@ if [ ! $? -eq 0 ]; then
   errors=true
 fi
 
-echo "deno lint --unstable"
-deno lint --unstable
-if [ ! $? -eq 0 ]; then
-  errors=true
-fi
+# echo "deno lint --unstable"
+# deno lint --unstable
+# if [ ! $? -eq 0 ]; then
+#   errors=true
+# fi
 
 echo "deno test -A --unstable"
 deno test -A --unstable
