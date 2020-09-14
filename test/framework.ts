@@ -1,3 +1,5 @@
+import { SeedT } from "../data/random.ts";
+
 export interface TestDefinition {
   fn: () => void | Promise<void>;
   name: string;
@@ -25,6 +27,8 @@ export interface AssertEquals {
 }
 
 export interface Framework {
+  runs: number;
+  seed: SeedT;
   test: (msg: string, fn: () => void) => void;
   assertEquals: AssertEquals;
 }
