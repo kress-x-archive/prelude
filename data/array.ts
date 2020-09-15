@@ -99,6 +99,24 @@ export const ap = <A, B>(
 
 export const of = <A>(x: A): ArrayT<A> => [x];
 
+export const join = <A>(
+  tt: ArrayT<ArrayT<A>>,
+): ArrayT<A> => {
+  const l = tt.length;
+
+  const result: A[] = new Array(l);
+
+  let n = 0;
+
+  for (let i = 0; i < l; i++) {
+    const t = tt[i];
+    const k = t.length;
+    for (let j = 0; j < k; j++) result[n++] = t[j];
+  }
+
+  return result;
+};
+
 export const chain = <A, B>(
   f: (x: A) => ArrayT<B>,
   t: ArrayT<A>,
@@ -113,24 +131,6 @@ export const chain = <A, B>(
     const b = f(t[i]);
     const k = b.length;
     for (let j = 0; j < k; j++) result[n++] = b[j];
-  }
-
-  return result;
-};
-
-export const join = <A>(
-  tt: ArrayT<ArrayT<A>>,
-): ArrayT<A> => {
-  const l = tt.length;
-
-  const result: A[] = new Array(l);
-
-  let n = 0;
-
-  for (let i = 0; i < l; i++) {
-    const t = tt[i];
-    const k = t.length;
-    for (let j = 0; j < k; j++) result[n++] = t[j];
   }
 
   return result;
