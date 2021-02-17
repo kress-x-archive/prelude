@@ -1,3 +1,6 @@
+> USE [PURIFREE](https://github.com/nythrox/purifree) INSTEAD
+
+
 # prelude
 
 _a base library for functional programming in [deno][deno]_
